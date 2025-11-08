@@ -3,20 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FileText, 
   Video, 
-  Calendar, 
   MessageSquare, 
   Users,
   Check,
   Loader,
-  ExternalLink,
   X,
-  Plus,
-  Send,
-  Upload,
-  Clock
+  Plus
 } from 'lucide-react';
 import {
-  GoogleWorkspaceIntegration,
   SlackIntegration,
   ZoomIntegration,
   TeamsIntegration
@@ -24,10 +18,9 @@ import {
 
 const IntegrationManager = () => {
   const [connections, setConnections] = useState({
-    google: false,
+    teams: false,
     slack: false,
-    zoom: false,
-    teams: false
+    zoom: false
   });
   const [loading, setLoading] = useState({});
   const [showActionModal, setShowActionModal] = useState(null);
@@ -35,7 +28,6 @@ const IntegrationManager = () => {
   const [results, setResults] = useState({});
 
   // Initialize services
-  const [googleService] = useState(() => new GoogleWorkspaceIntegration());
   const [slackService] = useState(() => new SlackIntegration());
   const [zoomService] = useState(() => new ZoomIntegration());
   const [teamsService] = useState(() => new TeamsIntegration());
@@ -43,254 +35,65 @@ const IntegrationManager = () => {
   // Check existing connections on mount
   useEffect(() => {
     setConnections({
-      google: googleService.isConnected(),
       slack: slackService.isConnected(),
       zoom: zoomService.isConnected(),
       teams: teamsService.isConnected()
     });
-  }, [googleService, slackService, zoomService, teamsService]);
-
-  // Connect to Google Workspace
-  const handleGoogleConnect = async () => {
-    setLoading({ ...loading, google: true });
-    const result = await googleService.connect();
-    
-    if (result.success) {
-      setConnections({ ...connections, google: true });
-      setResults({ ...results, google: { type: 'success', message: '✅ Connected to Google Workspace!' } });
-    } else {
-      setResults({ ...results, google: { type: 'error', message: '❌ ' + (result.error || 'Setup required: Add VITE_GOOGLE_CLIENT_ID and VITE_GOOGLE_API_KEY to .env file') } });
-    }
-    setLoading({ ...loading, google: false });
-  };
-
-  // Create Google Doc
-  const handleCreateDoc = async () => {
-    if (!actionData.docTitle) {
-      alert('Please enter a document title');
-      return;
-    }
-
-    setLoading({ ...loading, createDoc: true });
-    const result = await googleService.createDocument(
-      actionData.docTitle,
-      actionData.docContent || 'Created from NEXUS Adaptive Workplace Assistant\n\n'
-    );
-    
-    if (result.success) {
-      setResults({ ...results, doc: result });
-      setShowActionModal(null);
-      setActionData({});
-      window.open(result.url, '_blank');
-    } else {
-      alert('Error: ' + result.error);
-    }
-    setLoading({ ...loading, createDoc: false });
-  };
-
-  // Create Google Meet
-  const handleCreateMeet = async () => {
-    if (!actionData.meetTitle || !actionData.meetTime) {
-      alert('Please enter meeting title and time');
-      return;
-    }
-
-    setLoading({ ...loading, createMeet: true });
-    const result = await googleService.createMeeting(
-      actionData.meetTitle,
-      actionData.meetTime,
-      parseInt(actionData.meetDuration) || 60
-    );
-    
-    if (result.success) {
-      setResults({ ...results, meet: result });
-      setShowActionModal(null);
-      setActionData({});
-      window.open(result.meetLink, '_blank');
-    } else {
-      alert('Error: ' + result.error);
-    }
-    setLoading({ ...loading, createMeet: false });
-  };
-
-  // Upload to Drive
-  const handleUploadDrive = async () => {
-    if (!actionData.fileName || !actionData.fileContent) {
-      alert('Please enter file name and content');
-      return;
-    }
-
-    setLoading({ ...loading, uploadDrive: true });
-    const result = await googleService.uploadToDrive(
-      actionData.fileName,
-      actionData.fileContent,
-      'text/plain'
-    );
-    
-    if (result.success) {
-      setResults({ ...results, drive: result });
-      setShowActionModal(null);
-      setActionData({});
-      window.open(result.url, '_blank');
-    } else {
-      alert('Error: ' + result.error);
-    }
-    setLoading({ ...loading, uploadDrive: false });
-  };
-
-  // Send Slack Message
-  const handleSlackMessage = async () => {
-    if (!actionData.slackChannel || !actionData.slackMessage) {
-      alert('Please enter channel and message');
-      return;
-    }
-
-    setLoading({ ...loading, slackMessage: true });
-    const result = await slackService.sendMessage(
-      actionData.slackChannel,
-      actionData.slackMessage
-    );
-    
-    if (result.success) {
-      setResults({ ...results, slack: { type: 'success', message: 'Message sent!' } });
-      setShowActionModal(null);
-      setActionData({});
-    } else {
-      alert('Error: ' + result.error);
-    }
-    setLoading({ ...loading, slackMessage: false });
-  };
-
-  // Create Zoom Meeting
-  const handleZoomMeeting = async () => {
-    if (!actionData.zoomTopic || !actionData.zoomTime) {
-      alert('Please enter meeting topic and time');
-      return;
-    }
-
-    setLoading({ ...loading, zoomMeeting: true });
-    const result = await zoomService.createMeeting(
-      actionData.zoomTopic,
-      actionData.zoomTime,
-      parseInt(actionData.zoomDuration) || 60
-    );
-    
-    if (result.success) {
-      setResults({ ...results, zoom: result });
-      setShowActionModal(null);
-      setActionData({});
-      window.open(result.joinUrl, '_blank');
-    } else {
-      alert('Error: ' + result.error);
-    }
-    setLoading({ ...loading, zoomMeeting: false });
-  };
-
-  // Create Teams Meeting
-  const handleTeamsMeeting = async () => {
-    if (!actionData.teamsSubject || !actionData.teamsTime) {
-      alert('Please enter meeting subject and time');
-      return;
-    }
-
-    setLoading({ ...loading, teamsMeeting: true });
-    const result = await teamsService.createMeeting(
-      actionData.teamsSubject,
-      actionData.teamsTime,
-      parseInt(actionData.teamsDuration) || 60
-    );
-    
-    if (result.success) {
-      setResults({ ...results, teams: result });
-      setShowActionModal(null);
-      setActionData({});
-      window.open(result.joinUrl, '_blank');
-    } else {
-      alert('Error: ' + result.error);
-    }
-    setLoading({ ...loading, teamsMeeting: false });
-  };
+  }, [slackService, zoomService, teamsService]);
 
   const integrations = [
     {
-      id: 'google',
-      name: 'Google Workspace',
-      icon: '🔵',
-      color: 'from-blue-500 to-blue-600',
-      description: 'Create Docs, Meet links, manage Calendar',
-      connected: connections.google,
-      actions: [
-        {
-          id: 'createDoc',
-          label: 'Create Document',
-          icon: <FileText className="w-4 h-4" />,
-          onClick: () => setShowActionModal('createDoc')
-        },
-        {
-          id: 'createMeet',
-          label: 'Schedule Meet',
-          icon: <Video className="w-4 h-4" />,
-          onClick: () => setShowActionModal('createMeet')
-        },
-        {
-          id: 'uploadDrive',
-          label: 'Upload to Drive',
-          icon: <Upload className="w-4 h-4" />,
-          onClick: () => setShowActionModal('uploadDrive')
-        }
-      ],
-      onConnect: handleGoogleConnect
+      id: 'teams',
+      name: 'Microsoft Teams',
+      logo: (
+        <svg className="w-16 h-16" viewBox="0 0 48 48">
+          <path fill="#5059C9" d="M44,18v16c0,2.2-1.8,4-4,4H28V18H44z"/>
+          <path fill="#7B83EB" d="M28,18v20H12c-2.2,0-4-1.8-4-4V18H28z"/>
+          <circle fill="#FFF" cx="28" cy="28" r="10"/>
+          <path fill="#5059C9" d="M31,25h-6v-2h6V25z M31,27h-6v2h6V27z M31,31h-6v2h6V31z"/>
+        </svg>
+      ),
+      color: 'from-purple-500 to-purple-600',
+      description: 'Create meetings, send messages, collaborate',
+      connected: connections.teams,
+      actions: [],
+      onConnect: () => teamsService.connect()
     },
     {
       id: 'slack',
       name: 'Slack',
-      icon: '💬',
+      logo: (
+        <svg className="w-12 h-12" viewBox="0 0 48 48">
+          <path fill="#33d375" d="M33,8c0-2.209-1.791-4-4-4s-4,1.791-4,4c0,2.209,1.791,4,4,4h4V8z"/>
+          <path fill="#33d375" d="M35,8c0,2.209,1.791,4,4,4s4-1.791,4-4s-1.791-4-4-4v4H35z"/>
+          <path fill="#40c4ff" d="M40,23c2.209,0,4-1.791,4-4s-1.791-4-4-4s-4,1.791-4,4v4H40z"/>
+          <path fill="#40c4ff" d="M40,25c-2.209,0-4,1.791-4,4s1.791,4,4,4s4-1.791,4-4h-4V25z"/>
+          <path fill="#e91e63" d="M15,40c0,2.209,1.791,4,4,4s4-1.791,4-4s-1.791-4-4-4h-4V40z"/>
+          <path fill="#e91e63" d="M13,40c0-2.209-1.791-4-4-4s-4,1.791-4,4s1.791,4,4,4V40H13z"/>
+          <path fill="#ffc107" d="M8,25c-2.209,0-4,1.791-4,4s1.791,4,4,4s4-1.791,4-4v-4H8z"/>
+          <path fill="#ffc107" d="M8,23c2.209,0,4-1.791,4-4s-1.791-4-4-4s-4,1.791-4,4H8V23z"/>
+        </svg>
+      ),
       color: 'from-purple-500 to-purple-600',
       description: 'Send messages, create channels',
       connected: connections.slack,
-      actions: [
-        {
-          id: 'slackMessage',
-          label: 'Send Message',
-          icon: <MessageSquare className="w-4 h-4" />,
-          onClick: () => setShowActionModal('slackMessage')
-        }
-      ],
+      actions: [],
       onConnect: () => slackService.connect()
     },
     {
       id: 'zoom',
       name: 'Zoom',
-      icon: '📹',
+      logo: (
+        <svg className="w-12 h-12" viewBox="0 0 48 48">
+          <path fill="#2196F3" d="M41,42H13c-2.761,0-5-2.239-5-5V11c0-2.761,2.239-5,5-5h28c2.761,0,5,2.239,5,5v26C46,39.761,43.761,42,41,42z"/>
+          <path fill="#FFF" d="M16 20h14v8H16zM35 20l-5 4 5 4z"/>
+        </svg>
+      ),
       color: 'from-indigo-500 to-indigo-600',
       description: 'Schedule meetings, join calls',
       connected: connections.zoom,
-      actions: [
-        {
-          id: 'zoomMeeting',
-          label: 'Create Meeting',
-          icon: <Video className="w-4 h-4" />,
-          onClick: () => setShowActionModal('zoomMeeting')
-        }
-      ],
+      actions: [],
       onConnect: () => zoomService.connect()
-    },
-    {
-      id: 'teams',
-      name: 'Microsoft Teams',
-      icon: '👥',
-      color: 'from-pink-500 to-pink-600',
-      description: 'Create meetings, send messages',
-      connected: connections.teams,
-      actions: [
-        {
-          id: 'teamsMeeting',
-          label: 'Create Meeting',
-          icon: <Users className="w-4 h-4" />,
-          onClick: () => setShowActionModal('teamsMeeting')
-        }
-      ],
-      onConnect: () => teamsService.connect()
     }
   ];
 
@@ -322,7 +125,7 @@ const IntegrationManager = () => {
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <span className="text-4xl">{integration.icon}</span>
+                {integration.logo}
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                     {integration.name}
@@ -391,237 +194,6 @@ const IntegrationManager = () => {
         ))}
       </div>
 
-      {/* Action Modals */}
-      <AnimatePresence>
-        {showActionModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
-            onClick={() => setShowActionModal(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full p-6"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {showActionModal === 'createDoc' && 'Create Google Doc'}
-                  {showActionModal === 'createMeet' && 'Schedule Google Meet'}
-                  {showActionModal === 'uploadDrive' && 'Upload to Drive'}
-                  {showActionModal === 'slackMessage' && 'Send Slack Message'}
-                  {showActionModal === 'zoomMeeting' && 'Create Zoom Meeting'}
-                  {showActionModal === 'teamsMeeting' && 'Create Teams Meeting'}
-                </h3>
-                <button
-                  onClick={() => setShowActionModal(null)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {/* Create Doc Form */}
-                {showActionModal === 'createDoc' && (
-                  <>
-                    <input
-                      type="text"
-                      placeholder="Document Title"
-                      value={actionData.docTitle || ''}
-                      onChange={(e) => setActionData({ ...actionData, docTitle: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <textarea
-                      placeholder="Content (optional)"
-                      value={actionData.docContent || ''}
-                      onChange={(e) => setActionData({ ...actionData, docContent: e.target.value })}
-                      rows={4}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleCreateDoc}
-                      disabled={loading.createDoc}
-                      className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold"
-                    >
-                      {loading.createDoc ? <Loader className="w-5 h-5 animate-spin mx-auto" /> : 'Create Document'}
-                    </motion.button>
-                  </>
-                )}
-
-                {/* Create Meet Form */}
-                {showActionModal === 'createMeet' && (
-                  <>
-                    <input
-                      type="text"
-                      placeholder="Meeting Title"
-                      value={actionData.meetTitle || ''}
-                      onChange={(e) => setActionData({ ...actionData, meetTitle: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <input
-                      type="datetime-local"
-                      value={actionData.meetTime || getDefaultTime()}
-                      onChange={(e) => setActionData({ ...actionData, meetTime: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Duration (minutes)"
-                      value={actionData.meetDuration || '60'}
-                      onChange={(e) => setActionData({ ...actionData, meetDuration: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleCreateMeet}
-                      disabled={loading.createMeet}
-                      className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold"
-                    >
-                      {loading.createMeet ? <Loader className="w-5 h-5 animate-spin mx-auto" /> : 'Schedule Meeting'}
-                    </motion.button>
-                  </>
-                )}
-
-                {/* Upload Drive Form */}
-                {showActionModal === 'uploadDrive' && (
-                  <>
-                    <input
-                      type="text"
-                      placeholder="File Name (e.g., resume.txt)"
-                      value={actionData.fileName || ''}
-                      onChange={(e) => setActionData({ ...actionData, fileName: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <textarea
-                      placeholder="File Content"
-                      value={actionData.fileContent || ''}
-                      onChange={(e) => setActionData({ ...actionData, fileContent: e.target.value })}
-                      rows={6}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleUploadDrive}
-                      disabled={loading.uploadDrive}
-                      className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold"
-                    >
-                      {loading.uploadDrive ? <Loader className="w-5 h-5 animate-spin mx-auto" /> : 'Upload File'}
-                    </motion.button>
-                  </>
-                )}
-
-                {/* Slack Message Form */}
-                {showActionModal === 'slackMessage' && (
-                  <>
-                    <input
-                      type="text"
-                      placeholder="Channel (e.g., #general)"
-                      value={actionData.slackChannel || ''}
-                      onChange={(e) => setActionData({ ...actionData, slackChannel: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <textarea
-                      placeholder="Your message"
-                      value={actionData.slackMessage || ''}
-                      onChange={(e) => setActionData({ ...actionData, slackMessage: e.target.value })}
-                      rows={4}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleSlackMessage}
-                      disabled={loading.slackMessage}
-                      className="w-full py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-bold"
-                    >
-                      {loading.slackMessage ? <Loader className="w-5 h-5 animate-spin mx-auto" /> : 'Send Message'}
-                    </motion.button>
-                  </>
-                )}
-
-                {/* Zoom Meeting Form */}
-                {showActionModal === 'zoomMeeting' && (
-                  <>
-                    <input
-                      type="text"
-                      placeholder="Meeting Topic"
-                      value={actionData.zoomTopic || ''}
-                      onChange={(e) => setActionData({ ...actionData, zoomTopic: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <input
-                      type="datetime-local"
-                      value={actionData.zoomTime || getDefaultTime()}
-                      onChange={(e) => setActionData({ ...actionData, zoomTime: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Duration (minutes)"
-                      value={actionData.zoomDuration || '60'}
-                      onChange={(e) => setActionData({ ...actionData, zoomDuration: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleZoomMeeting}
-                      disabled={loading.zoomMeeting}
-                      className="w-full py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-xl font-bold"
-                    >
-                      {loading.zoomMeeting ? <Loader className="w-5 h-5 animate-spin mx-auto" /> : 'Create Meeting'}
-                    </motion.button>
-                  </>
-                )}
-
-                {/* Teams Meeting Form */}
-                {showActionModal === 'teamsMeeting' && (
-                  <>
-                    <input
-                      type="text"
-                      placeholder="Meeting Subject"
-                      value={actionData.teamsSubject || ''}
-                      onChange={(e) => setActionData({ ...actionData, teamsSubject: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <input
-                      type="datetime-local"
-                      value={actionData.teamsTime || getDefaultTime()}
-                      onChange={(e) => setActionData({ ...actionData, teamsTime: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Duration (minutes)"
-                      value={actionData.teamsDuration || '60'}
-                      onChange={(e) => setActionData({ ...actionData, teamsDuration: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                    />
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleTeamsMeeting}
-                      disabled={loading.teamsMeeting}
-                      className="w-full py-3 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-xl font-bold"
-                    >
-                      {loading.teamsMeeting ? <Loader className="w-5 h-5 animate-spin mx-auto" /> : 'Create Meeting'}
-                    </motion.button>
-                  </>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

@@ -4,44 +4,44 @@
  * All using official OAuth 2.0 and REST APIs
  */
 
-// Google Workspace Integration
+// Google Workspace Integration (Using Google Identity Services - New API)
 export class GoogleWorkspaceIntegration {
   constructor() {
     this.clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     this.apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
-    this.scopes = [
-      'https://www.googleapis.com/auth/documents',
-      'https://www.googleapis.com/auth/drive.file',
-      'https://www.googleapis.com/auth/calendar',
-      'https://www.googleapis.com/auth/meetings.space.created'
-    ].join(' ');
-    this.isInitialized = false;
+    this.accessToken = localStorage.getItem('google_access_token');
+    this.tokenClient = null;
   }
 
-  // Initialize Google API
+  // Initialize Google Identity Services
   async initGoogleAPI() {
-    if (this.isInitialized) return;
-
     return new Promise((resolve, reject) => {
-      if (typeof gapi === 'undefined') {
-        reject(new Error('Google API not loaded'));
+      // Check if libraries are loaded
+      if (typeof gapi === 'undefined' || typeof google === 'undefined') {
+        reject(new Error('Google API scripts not loaded. Please refresh the page.'));
         return;
       }
 
-      gapi.load('client:auth2', async () => {
+      // Load the API client
+      gapi.load('client', async () => {
         try {
           await gapi.client.init({
             apiKey: this.apiKey,
-            clientId: this.clientId,
-            scope: this.scopes,
             discoveryDocs: [
               'https://docs.googleapis.com/$discovery/rest?version=v1',
               'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
               'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'
             ]
           });
-          this.isInitialized = true;
-          console.log('✅ Google API initialized');
+
+          // Initialize the token client for OAuth
+          this.tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: this.clientId,
+            scope: 'https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar',
+            callback: '', // Will be set later
+          });
+
+          console.log('✅ Google API initialized successfully');
           resolve();
         } catch (error) {
           console.error('❌ Google API init error:', error);
@@ -55,33 +55,46 @@ export class GoogleWorkspaceIntegration {
   async connect() {
     try {
       await this.initGoogleAPI();
-      const authInstance = gapi.auth2.getAuthInstance();
-      
-      if (authInstance.isSignedIn.get()) {
-        const user = authInstance.currentUser.get();
-        return {
-          success: true,
-          user: user.getBasicProfile(),
-          accessToken: user.getAuthResponse().access_token
-        };
-      }
 
-      const user = await authInstance.signIn();
-      const accessToken = user.getAuthResponse().access_token;
-      
-      // Save token
-      localStorage.setItem('google_access_token', accessToken);
-      
-      return {
-        success: true,
-        user: user.getBasicProfile(),
-        accessToken: accessToken
-      };
+      return new Promise((resolve) => {
+        // Set the callback for when user grants permission
+        this.tokenClient.callback = (response) => {
+          if (response.error) {
+            resolve({
+              success: false,
+              error: response.error
+            });
+            return;
+          }
+
+          // Save the access token
+          this.accessToken = response.access_token;
+          localStorage.setItem('google_access_token', response.access_token);
+          
+          console.log('✅ Google OAuth successful');
+          resolve({
+            success: true,
+            accessToken: response.access_token
+          });
+        };
+
+        // Request the access token
+        if (this.accessToken && gapi.client.getToken()) {
+          // Already have a token
+          resolve({
+            success: true,
+            accessToken: this.accessToken
+          });
+        } else {
+          // Request a new token
+          this.tokenClient.requestAccessToken({ prompt: 'consent' });
+        }
+      });
     } catch (error) {
-      console.error('Google connection error:', error);
-      return { 
-        success: false, 
-        error: error.error || error.message || 'Connection failed' 
+      console.error('❌ Google connection error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to connect to Google. Make sure API scripts are loaded.'
       };
     }
   }
@@ -89,9 +102,12 @@ export class GoogleWorkspaceIntegration {
   // Disconnect
   async disconnect() {
     try {
-      const authInstance = gapi.auth2.getAuthInstance();
-      await authInstance.signOut();
+      if (this.accessToken) {
+        google.accounts.oauth2.revoke(this.accessToken);
+      }
+      this.accessToken = null;
       localStorage.removeItem('google_access_token');
+      gapi.client.setToken(null);
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -100,17 +116,18 @@ export class GoogleWorkspaceIntegration {
 
   // Check if connected
   isConnected() {
-    if (!this.isInitialized) return false;
-    const authInstance = gapi.auth2.getAuthInstance();
-    return authInstance && authInstance.isSignedIn.get();
+    return !!this.accessToken && !!localStorage.getItem('google_access_token');
   }
 
   // Create Google Doc
   async createDocument(title, content = '') {
     try {
       if (!this.isConnected()) {
-        throw new Error('Not connected to Google');
+        throw new Error('Not connected to Google. Please connect first.');
       }
+
+      // Set the access token
+      gapi.client.setToken({ access_token: this.accessToken });
 
       const response = await gapi.client.docs.documents.create({
         title: title
@@ -147,8 +164,11 @@ export class GoogleWorkspaceIntegration {
   async createMeeting(summary, startTime, duration = 60) {
     try {
       if (!this.isConnected()) {
-        throw new Error('Not connected to Google');
+        throw new Error('Not connected to Google. Please connect first.');
       }
+
+      // Set the access token
+      gapi.client.setToken({ access_token: this.accessToken });
 
       const endTime = new Date(new Date(startTime).getTime() + duration * 60000);
       
@@ -194,8 +214,11 @@ export class GoogleWorkspaceIntegration {
   async uploadToDrive(fileName, fileContent, mimeType = 'text/plain') {
     try {
       if (!this.isConnected()) {
-        throw new Error('Not connected to Google');
+        throw new Error('Not connected to Google. Please connect first.');
       }
+
+      // Set the access token
+      gapi.client.setToken({ access_token: this.accessToken });
 
       const metadata = {
         name: fileName,
