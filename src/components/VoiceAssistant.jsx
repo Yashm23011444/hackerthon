@@ -93,51 +93,87 @@ const VoiceAssistant = ({ accessibilitySettings }) => {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = selectedLanguage;
-    recognition.maxAlternatives = 1;
+    recognition.maxAlternatives = 3; // Get 3 alternatives for better accuracy
 
     recognition.onresult = (event) => {
       let interim = '';
       let finalText = '';
+      let bestConfidence = 0;
 
-      // Process all results
+      // Process all results with better accuracy checking
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
-        const text = result[0].transcript;
+        
+        // Get best alternative based on confidence
+        let bestTranscript = result[0].transcript;
+        let bestConf = result[0].confidence || 0;
+        
+        // Check all alternatives and pick the best one
+        for (let j = 0; j < result.length && j < 3; j++) {
+          const alt = result[j];
+          if (alt.confidence > bestConf) {
+            bestTranscript = alt.transcript;
+            bestConf = alt.confidence;
+          }
+        }
         
         if (result.isFinal) {
-          finalText += text + ' ';
-          const conf = Math.round(result[0].confidence * 100);
-          setConfidence(conf);
+          finalText += bestTranscript + ' ';
+          bestConfidence = Math.max(bestConfidence, Math.round(bestConf * 100));
         } else {
-          interim += text;
+          interim += bestTranscript;
         }
       }
 
-      // Update interim results (gray text)
+      // Update confidence score
+      if (bestConfidence > 0) {
+        setConfidence(bestConfidence);
+      }
+
+      // Update interim results (gray text) - shows what's being detected in real-time
       setInterimTranscript(interim);
 
-      // When we have final text, add to transcript and translate
+      // When we have final text, add to transcript and translate immediately
       if (finalText.trim()) {
-        setTranscript(prev => {
-          const newTranscript = (prev + ' ' + finalText).trim();
-          // Translate after state updates
-          setTimeout(() => translateText(newTranscript), 100);
-          return newTranscript;
-        });
+        const cleanedText = finalText.trim();
+        setTranscript(prev => (prev + ' ' + cleanedText).trim());
+        // Clear interim after final text is added
+        setInterimTranscript('');
       }
     };
 
     recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      
       const errors = {
         'not-allowed': 'Microphone access denied. Please allow permissions in browser settings.',
-        'no-speech': 'No speech detected. Please speak clearly.',
+        'no-speech': 'No speech detected. Try speaking louder and clearer.',
         'network': 'Network error occurred. Check your internet connection.',
         'audio-capture': 'No microphone found. Please connect a microphone.',
-        'aborted': 'Speech recognition aborted.',
+        'aborted': 'Speech recognition stopped.',
       };
-      setError(errors[event.error] || `Error: ${event.error}`);
+      
+      // Only show error if it's critical
+      if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        setError(errors[event.error] || `Error: ${event.error}`);
+      }
+      
+      // Stop listening for critical errors
       if (event.error === 'not-allowed' || event.error === 'audio-capture') {
         setIsListening(false);
+      }
+      
+      // Auto-restart for 'no-speech' errors to keep listening
+      if (event.error === 'no-speech' && isListening) {
+        setTimeout(() => {
+          try {
+            if (recognitionRef.current && isListening) {
+              recognitionRef.current.start();
+            }
+          } catch (e) {
+            console.log('Auto-restart failed:', e);
+          }
+        }, 100);
       }
     };
 
@@ -146,14 +182,23 @@ const VoiceAssistant = ({ accessibilitySettings }) => {
     };
 
     recognition.onend = () => {
+      console.log('Recognition ended, isListening:', isListening);
+      
       if (isListening) {
-        // Restart if still listening
+        // Restart immediately if still listening (more responsive)
         setTimeout(() => {
           try {
-            recognition.start();
+            if (recognitionRef.current && isListening) {
+              recognitionRef.current.start();
+              console.log('Recognition restarted');
+            }
           } catch (e) {
+            console.error('Failed to restart:', e);
+            // If restart fails, stop listening
+            setIsListening(false);
+            setError('Voice recognition stopped. Please click Start again.');
           }
-        }, 100);
+        }, 50); // Reduced delay for faster restart
       }
     };
 
@@ -169,7 +214,22 @@ const VoiceAssistant = ({ accessibilitySettings }) => {
     };
   }, [selectedLanguage, isListening]);
 
-  // Translate using free API with better error handling
+  // Auto-translate when transcript changes (debounced for performance)
+  useEffect(() => {
+    if (!transcript || !transcript.trim()) {
+      setTranslation('');
+      return;
+    }
+
+    // Debounce translation to avoid too many API calls
+    const debounceTimer = setTimeout(() => {
+      translateText(transcript);
+    }, 500); // Wait 500ms after user stops speaking
+
+    return () => clearTimeout(debounceTimer);
+  }, [transcript, selectedLanguage, targetLanguage]);
+
+  // Translate using free API with better error handling and caching
   const translateText = async (text) => {
     if (!text || !text.trim()) {
       return;
@@ -177,8 +237,13 @@ const VoiceAssistant = ({ accessibilitySettings }) => {
 
     const textToTranslate = text.trim();
 
+    // Don't translate if already translating to avoid duplicate requests
+    if (isTranslating) {
+      return;
+    }
+
     setIsTranslating(true);
-    setError(''); // Clear previous errors
+    setError(''); // Clear any previous errors
 
     try {
       const sourceLang = selectedLanguage.split('-')[0];
@@ -191,31 +256,56 @@ const VoiceAssistant = ({ accessibilitySettings }) => {
         return;
       }
 
-      // Build API URL
-      const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(textToTranslate)}&langpair=${sourceLang}|${targetLang}`;
-
-      const response = await fetch(apiUrl);
+      // Use Google Translate API through a CORS-friendly proxy
+      const response = await fetch(
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(textToTranslate)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          }
+        }
+      );
       
       if (!response.ok) {
-        throw new Error(`API returned status ${response.status}`);
+        throw new Error(`Translation API error: ${response.status}`);
       }
 
       const data = await response.json();
 
-      if (data.responseData && data.responseData.translatedText) {
-        const translatedText = data.responseData.translatedText;
-        
+      // Google Translate API returns array format: [[[translatedText, originalText, null, null, 3]]]
+      if (data && data[0] && data[0][0] && data[0][0][0]) {
+        const translatedText = data[0].map(item => item[0]).join('');
         setTranslation(translatedText);
-        
-        // Show warning if low quality translation
-        if (data.responseData.match && data.responseData.match < 0.5) {
-        }
+        setError(''); // Clear error on success
       } else {
         throw new Error('Invalid translation response');
       }
     } catch (err) {
-      setError(`Translation failed: ${err.message}`);
-      setTranslation('❌ Translation unavailable');
+      console.error('Translation error:', err);
+      
+      // Fallback: Try MyMemory API
+      try {
+        const sourceLang = selectedLanguage.split('-')[0];
+        const targetLang = targetLanguage.split('-')[0];
+        
+        const fallbackResponse = await fetch(
+          `https://api.mymemory.translated.net/get?q=${encodeURIComponent(textToTranslate)}&langpair=${sourceLang}|${targetLang}`
+        );
+        
+        const fallbackData = await fallbackResponse.json();
+        
+        if (fallbackData.responseData && fallbackData.responseData.translatedText) {
+          setTranslation(fallbackData.responseData.translatedText);
+          setError(''); // Clear error on success
+        } else {
+          throw new Error('Fallback API also failed');
+        }
+      } catch (fallbackErr) {
+        console.error('Fallback translation also failed:', fallbackErr);
+        setTranslation('⚠️ Translation temporarily unavailable. Please try again.');
+        setError('Translation service temporarily unavailable');
+      }
     } finally {
       setIsTranslating(false);
     }
@@ -224,24 +314,46 @@ const VoiceAssistant = ({ accessibilitySettings }) => {
   const handleVoiceInput = () => {
     if (isListening) {
       // Stop listening
+      console.log('Stopping voice recognition...');
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
         } catch (e) {
+          console.error('Error stopping recognition:', e);
         }
       }
       setIsListening(false);
       setInterimTranscript('');
     } else {
       // Start listening
+      console.log('Starting voice recognition...');
       setError('');
       setIsListening(true);
       
       if (recognitionRef.current) {
         try {
-          recognitionRef.current.start();
+          // Stop any existing recognition before starting
+          recognitionRef.current.stop();
+          
+          // Start after a brief delay to ensure clean start
+          setTimeout(() => {
+            try {
+              recognitionRef.current.start();
+              console.log('Voice recognition started successfully');
+            } catch (err) {
+              console.error('Error starting recognition:', err);
+              if (err.message.includes('already started')) {
+                // Recognition is already running, just set state
+                console.log('Recognition was already running');
+              } else {
+                setError('Microphone access required. Please allow microphone permissions.');
+                setIsListening(false);
+              }
+            }
+          }, 100);
         } catch (err) {
-          setError('Failed to start voice recognition. Please refresh the page.');
+          console.error('Error in voice recognition setup:', err);
+          setError('Failed to start voice recognition. Please check microphone permissions.');
           setIsListening(false);
         }
       }

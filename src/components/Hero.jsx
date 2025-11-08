@@ -29,7 +29,7 @@ const Hero = ({ onStartFreeTrialClick, onWatchDemoClick }) => {
           >
             <Sparkles className="w-4 h-4 text-blue-600" />
             <span className="text-sm font-medium text-blue-600">
-              Empowering Workplace Inclusion
+              Welcome to Nexus
             </span>
           </motion.div>
 
@@ -41,7 +41,7 @@ const Hero = ({ onStartFreeTrialClick, onWatchDemoClick }) => {
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Adaptive Workplace
+              Let Us Be Your SAARTHI
             </span>
             <br />
             <span className="text-gray-900">Assistant for All</span>
@@ -54,7 +54,7 @@ const Hero = ({ onStartFreeTrialClick, onWatchDemoClick }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            Revolutionary AI-powered platform with multilingual voice recognition,
+            Revolutionary AI-powered platform for finding jobs, multilingual voice recognition,
             real-time translation, and personalized accessibility features designed
             for people with disabilities.
           </motion.p>
@@ -72,7 +72,7 @@ const Hero = ({ onStartFreeTrialClick, onWatchDemoClick }) => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <span>Start Free Trial</span>
+              <span>Search For job</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </motion.button>
             <motion.button 
@@ -81,7 +81,7 @@ const Hero = ({ onStartFreeTrialClick, onWatchDemoClick }) => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              Watch Demo
+              Voice Recognition
             </motion.button>
           </motion.div>
 

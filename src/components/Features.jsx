@@ -23,8 +23,8 @@ const Features = () => {
     },
     {
       icon: <Globe className="w-8 h-8" />,
-      title: 'Real-Time Translation',
-      description: 'Instant translation across languages with context-aware processing for seamless workplace communication.',
+      title: 'Job Matching & Integration',
+      description: 'Smart job recommendations and seamless onboarding tailored to individual abilities and preferences.',
       gradient: 'from-purple-500 to-pink-500',
     },
     {
@@ -35,13 +35,13 @@ const Features = () => {
     },
     {
       icon: <Brain className="w-8 h-8" />,
-      title: 'AI-Powered Personalization',
+      title: 'Personalization mode for Colour Blindness',
       description: 'Adaptive learning algorithms customize accessibility settings for motor and cognitive disabilities.',
       gradient: 'from-green-500 to-emerald-500',
     },
     {
       icon: <Users className="w-8 h-8" />,
-      title: 'Job Matching & Integration',
+      title: 'High Contrast Mode',
       description: 'Smart job recommendations and seamless onboarding tailored to individual abilities and preferences.',
       gradient: 'from-indigo-500 to-blue-500',
     },
@@ -53,14 +53,14 @@ const Features = () => {
     },
     {
       icon: <Cloud className="w-8 h-8" />,
-      title: 'Cloud-Based Deployment',
+      title: 'Voice Speed Controller',
       description: 'Scalable, affordable infrastructure with offline capabilities for uninterrupted access.',
       gradient: 'from-teal-500 to-cyan-500',
     },
     {
       icon: <Leaf className="w-8 h-8" />,
-      title: 'Eco-Friendly Design',
-      description: 'Carbon-neutral operations with energy-efficient algorithms supporting sustainable development.',
+      title: 'Voice control for  Blind Users',
+      description: 'Implementation of Voice Control feature for Blind people',
       gradient: 'from-lime-500 to-green-500',
     },
   ];
