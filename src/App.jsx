@@ -7,6 +7,7 @@ import AccessibilityPanel from './components/AccessibilityPanel';
 import AccessibilitySettingsPanel from './components/AccessibilitySettingsPanel';
 import JobMatching from './components/JobMatching';
 import Integration from './components/Integration';
+import IntegrationManager from './components/IntegrationManager';
 import Footer from './components/Footer';
 import OnboardingWizard from './components/OnboardingWizard';
 import KeyboardShortcutsOverlay from './components/KeyboardShortcutsOverlay';
@@ -124,6 +125,9 @@ function App() {
       <AccessibilityPanel settings={settings} setSettings={updateSettings} />
       <JobMatching ref={jobMatchingRef} />
       <Integration />
+      <section id="integrations" className="py-20 bg-gradient-to-b from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800">
+        <IntegrationManager />
+      </section>
       <Footer />
 
       {/* Floating Accessibility Button */}
