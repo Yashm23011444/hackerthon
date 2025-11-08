@@ -43,10 +43,36 @@ const AccessibilitySettingsPanel = ({ isOpen, onClose, settings, updateSettings 
   ];
 
   const toggles = [
-    { key: 'darkMode', label: 'Dark Mode', icon: Moon, description: 'Reduce eye strain' },
-    { key: 'highContrast', label: 'High Contrast', icon: Eye, description: 'Better visibility' },
-    { key: 'reducedMotion', label: 'Reduced Motion', icon: Zap, description: 'Less animations' },
-    { key: 'keyboardShortcuts', label: 'Keyboard Shortcuts', icon: Keyboard, description: 'Enable hotkeys' },
+    { 
+      key: 'darkMode', 
+      label: 'Dark Mode', 
+      icon: Moon, 
+      description: 'Reduce eye strain in low light'
+    },
+    { 
+      key: 'highContrast', 
+      label: 'High Contrast', 
+      icon: Eye, 
+      description: 'Better visibility for low vision'
+    },
+    { 
+      key: 'reducedMotion', 
+      label: 'Reduced Motion', 
+      icon: Zap, 
+      description: 'Stop animations (helps with vestibular disorders)'
+    },
+    { 
+      key: 'screenReader', 
+      label: 'Screen Reader Mode', 
+      icon: Eye, 
+      description: 'Optimize for NVDA, JAWS, VoiceOver'
+    },
+    { 
+      key: 'keyboardShortcuts', 
+      label: 'Keyboard Shortcuts', 
+      icon: Keyboard, 
+      description: 'Enable hotkeys (Press ? to view)'
+    },
   ];
 
   return (
@@ -182,6 +208,26 @@ const AccessibilitySettingsPanel = ({ isOpen, onClose, settings, updateSettings 
                   </div>
                 </button>
               ))}
+            </div>
+            
+            {/* Color Blindness Information */}
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="text-sm font-semibold text-blue-900 mb-2">
+                ℹ️ About Color Vision Deficiencies
+              </h4>
+              <div className="text-xs text-blue-800 space-y-2">
+                <p>
+                  <strong>Not diseases!</strong> These are genetic vision traits affecting how cone cells in the eye perceive colors.
+                </p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li><strong>Protanopia:</strong> Red-blind (1% of males) - Reds appear brown/gray</li>
+                  <li><strong>Deuteranopia:</strong> Green-blind (5% of males) - Most common type</li>
+                  <li><strong>Tritanopia:</strong> Blue-blind (Very rare) - Blues appear greenish</li>
+                </ul>
+                <p className="text-blue-700 mt-2">
+                  💡 Activate a mode to see how people with these conditions perceive colors.
+                </p>
+              </div>
             </div>
           </div>
 

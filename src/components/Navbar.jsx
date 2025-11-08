@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Accessibility } from 'lucide-react';
+import { Menu, X, Accessibility, LogIn, LogOut, User } from 'lucide-react';
 import LanguageSelector from './LanguageSelector';
+import { useAuth } from '../contexts/AuthContext';
+import AuthModal from './AuthModal';
 
 const Navbar = ({ onGetStartedClick }) => {
+  const { user, isAuthenticated, logout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -58,12 +62,46 @@ const Navbar = ({ onGetStartedClick }) => {
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             <LanguageSelector />
-            <button 
-              onClick={onGetStartedClick}
-              className="button-primary"
-            >
-              Get Started
-            </button>
+            
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <User className="w-5 h-5 text-purple-600" />
+                  <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                    {user?.displayName || user?.email?.split('@')[0]}
+                  </span>
+                </div>
+                <button 
+                  onClick={onGetStartedClick}
+                  className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-medium hover:shadow-lg transition-all"
+                >
+                  Dashboard
+                </button>
+                <button 
+                  onClick={logout}
+                  className="px-4 py-2 text-gray-700 hover:text-red-600 transition-colors flex items-center space-x-2"
+                  title="Logout"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <button 
+                  onClick={() => setShowAuthModal(true)}
+                  className="px-6 py-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-full font-medium transition-all flex items-center space-x-2"
+                >
+                  <LogIn className="w-5 h-5" />
+                  <span>Sign In</span>
+                </button>
+                <button 
+                  onClick={onGetStartedClick}
+                  className="button-primary"
+                >
+                  Get Started
+                </button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -95,20 +133,67 @@ const Navbar = ({ onGetStartedClick }) => {
               ))}
               <div className="mt-4 space-y-2">
                 <LanguageSelector />
-                <button 
-                  onClick={() => {
-                    onGetStartedClick();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="button-primary w-full"
-                >
-                  Get Started
-                </button>
+                {isAuthenticated ? (
+                  <>
+                    <div className="px-4 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <User className="w-5 h-5 text-purple-600" />
+                        <span className="text-sm font-medium text-purple-600">
+                          {user?.displayName || user?.email?.split('@')[0]}
+                        </span>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        onGetStartedClick();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="button-primary w-full"
+                    >
+                      Dashboard
+                    </button>
+                    <button 
+                      onClick={() => {
+                        logout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      <span>Logout</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => {
+                        setShowAuthModal(true);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full px-4 py-3 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <LogIn className="w-5 h-5" />
+                      <span>Sign In</span>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        onGetStartedClick();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="button-primary w-full"
+                    >
+                      Get Started
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </nav>
   );
 };

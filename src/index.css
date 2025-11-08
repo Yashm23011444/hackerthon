@@ -75,11 +75,32 @@
   color-scheme: dark;
 }
 
-/* Reduced Motion */
-.reduced-motion * {
-  animation-duration: 0.01ms !important;
+/* Reduced Motion - Removes all animations for vestibular disorders */
+.reduced-motion,
+.reduced-motion *,
+.reduced-motion *::before,
+.reduced-motion *::after {
+  animation-duration: 0.001ms !important;
   animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
+  transition-duration: 0.001ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+
+.reduced-motion * {
+  /* Stop all transforms and movements */
+  transform: none !important;
+}
+
+/* Respect system preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
 /* Color Blind Modes - CSS Filter Simulations */
@@ -133,6 +154,34 @@
 
 body {
   font-size: var(--base-font-size);
+}
+
+/* Screen Reader Optimizations */
+.screen-reader-optimized {
+  /* Enhance for screen readers */
+}
+
+.screen-reader-optimized img:not([alt]) {
+  /* Hide decorative images from screen readers */
+  outline: 2px solid red;
+}
+
+.screen-reader-optimized button:not([aria-label]):not([aria-labelledby]) {
+  /* Highlight buttons without labels */
+  outline: 2px dashed orange;
+}
+
+/* Screen reader only text (visually hidden but readable by SR) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 /* Focus Indicators for Keyboard Navigation */
