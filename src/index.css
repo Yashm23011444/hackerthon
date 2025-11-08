@@ -1,0 +1,198 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+  body {
+    @apply bg-white text-gray-900 antialiased;
+    font-feature-settings: "cv11", "ss01";
+    font-variation-settings: "opsz" 32;
+  }
+}
+
+@layer components {
+  .glass-effect {
+    @apply backdrop-blur-xl bg-white/80 border border-gray-200/50;
+  }
+  
+  .button-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-full font-medium
+           hover:from-blue-700 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl
+           transform hover:scale-105 active:scale-95;
+  }
+  
+  .button-secondary {
+    @apply px-6 py-3 bg-white text-blue-600 rounded-full font-medium border-2 border-blue-600
+           hover:bg-blue-50 transition-all duration-300;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-2xl hover:-translate-y-2;
+  }
+}
+
+/* Accessibility Features */
+
+/* High Contrast Mode - Demo-Friendly Version */
+.high-contrast {
+  /* Enhanced contrast but keeps design intact */
+  filter: contrast(1.5) brightness(1.1);
+}
+
+.high-contrast body {
+  background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%) !important;
+}
+
+.high-contrast .bg-white,
+.high-contrast .bg-gray-50 {
+  background: #f5f5f5 !important;
+  border: 2px solid #333 !important;
+}
+
+.high-contrast * {
+  /* Boost text contrast without destroying colors */
+  text-shadow: 0 0 1px rgba(0,0,0,0.8);
+}
+
+.high-contrast button,
+.high-contrast a {
+  /* Make interactive elements stand out */
+  border: 2px solid currentColor !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+}
+
+/* Dark Mode */
+.dark {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+.dark * {
+  color-scheme: dark;
+}
+
+/* Reduced Motion */
+.reduced-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* Color Blind Modes - CSS Filter Simulations */
+/* Protanopia (Red-Blind) - Removes red perception */
+.colorblind-protanopia {
+  filter: 
+    brightness(1.05)
+    contrast(1.1)
+    hue-rotate(10deg)
+    saturate(0.7);
+}
+
+.colorblind-protanopia * {
+  /* Shift reds toward yellow/green spectrum */
+  filter: hue-rotate(10deg);
+}
+
+/* Deuteranopia (Green-Blind) - Removes green perception */
+.colorblind-deuteranopia {
+  filter: 
+    brightness(1.05)
+    contrast(1.1)
+    hue-rotate(-10deg)
+    saturate(0.8);
+}
+
+.colorblind-deuteranopia * {
+  /* Shift greens toward blue/yellow spectrum */
+  filter: hue-rotate(-10deg);
+}
+
+/* Tritanopia (Blue-Blind) - Removes blue perception */
+.colorblind-tritanopia {
+  filter: 
+    brightness(1.1)
+    contrast(1.15)
+    hue-rotate(180deg)
+    saturate(0.6)
+    invert(0.05);
+}
+
+.colorblind-tritanopia * {
+  /* Shift blues toward green/red spectrum */
+  filter: hue-rotate(180deg) saturate(0.8);
+}
+
+/* Font Size Variable */
+:root {
+  --base-font-size: 16px;
+}
+
+body {
+  font-size: var(--base-font-size);
+}
+
+/* Focus Indicators for Keyboard Navigation */
+*:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Skip to Content Link */
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #3b82f6;
+  color: white;
+  padding: 8px 16px;
+  z-index: 100;
+  border-radius: 0 0 8px 0;
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Apple-like blur effect */
+.backdrop-blur-safari {
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
